@@ -62,6 +62,7 @@ namespace Noxer {
             this.set_reveal_child(false);
             this.tab = null;
         }
+
         public void show_for_tab(Noxer.NotebookTab tab) {
             this.tab = tab;
             this.message_label.set_text(@"¿Desea guardar los cambios de '$(tab.get_title())' antes de cerrarlo?");

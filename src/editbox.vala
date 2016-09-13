@@ -20,6 +20,7 @@ namespace Noxer {
 
     public class NotebookTab: Gtk.Box {
 
+        public signal void modified_changed(bool modified);
         public signal void close();
 
         public Gtk.Label label;
@@ -28,6 +29,8 @@ namespace Noxer {
         public Gtk.Label modified_label;
 
         public Noxer.BaseView view;
+
+        private bool modified = false;
 
         public NotebookTab() {
             this.set_orientation(Gtk.Orientation.HORIZONTAL);
@@ -68,6 +71,10 @@ namespace Noxer {
             return this.view;
         }
 
+        public bool get_modified() {
+            return this.modified;
+        }
+
         public void set_modified(bool modified) {
             if (modified) {
                 this.pack_end(this.modified_label, false, false, 0);
@@ -75,6 +82,17 @@ namespace Noxer {
             } else {
                 this.remove(this.modified_label);
             }
+
+            this.modified = modified;
+            this.modified_changed(modified);
+        }
+
+        public void disappear() {
+            this.view.forall((element) => this.view.remove(element));
+            this.view.destroy();
+
+            this.forall((element) => this.remove(element));
+            this.destroy();
         }
     }
 
@@ -94,8 +112,11 @@ namespace Noxer {
 
     public class EditBox: Gtk.Box {
 
+        public signal void update_headerbar(Noxer.NotebookTab? tab);
+
         public Gtk.Notebook notebook;
         public Noxer.InfoBar infobar;
+        public Noxer.HeaderBar headerbar;
 
         Noxer.BaseView[] views;
 
@@ -111,6 +132,7 @@ namespace Noxer {
 
             this.notebook = new Gtk.Notebook();
             this.notebook.set_scrollable(true);
+            this.notebook.switch_page.connect(this.switch_page_cb);
             this.pack_start(this.notebook, true, true, 0);
 
             Noxer.NotebookActionBox abox = new Noxer.NotebookActionBox();
@@ -123,6 +145,7 @@ namespace Noxer {
 
         private void add_view(Noxer.BaseView view) {
             Noxer.NotebookTab tab = new Noxer.NotebookTab();
+            tab.modified_changed.connect(this.modified_tab_cb);
             tab.close.connect(this.close_tab_cb);
 
             view.set_tab(tab);
@@ -135,6 +158,23 @@ namespace Noxer {
 
             tab.set_view(view);
             this.views += view;
+        }
+
+        private void switch_page_cb(Gtk.Widget widget, uint upage) {
+            //int page = this.notebook.get_nth_page(widget);
+            /*Noxer.BaseView? view = this.get_view_at_index((int)upage);
+
+            if (view != null) {
+                this.update_headerbar(view.tab);
+            } else {
+                this.update_headerbar(null);
+            }*/
+
+            //print(((int)upage).to_string() + "\n");
+        }
+
+        private void modified_tab_cb(Noxer.NotebookTab tab, bool modified) {
+            this.update_headerbar(tab);
         }
 
         private void close_tab_cb(Noxer.NotebookTab tab) {
@@ -240,6 +280,7 @@ namespace Noxer {
             }
 
             this.views = views;
+            tab.disappear();
         }
 
         public void try_close_current_tab() {

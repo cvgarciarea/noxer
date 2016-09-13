@@ -45,6 +45,7 @@ namespace Noxer {
             this.hbox.pack_start(this.panel, false, false, 0);
 
             this.editbox = new Noxer.EditBox();
+            this.editbox.update_headerbar.connect(this.update_headerbar_cb);
             this.hbox.pack_start(this.editbox, true, true, 0);
 
             this.hsize_group = new Gtk.SizeGroup(Gtk.SizeGroupMode.HORIZONTAL);
@@ -53,6 +54,10 @@ namespace Noxer {
 
             this.new_file();
             this.show_all();
+        }
+
+        private void update_headerbar_cb(Noxer.EditBox editbox, Noxer.NotebookTab? tab) {
+            this.headerbar.update_from_tab(tab);
         }
 
         public void new_file(string? file = null) {

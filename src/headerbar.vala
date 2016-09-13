@@ -30,6 +30,8 @@ namespace Noxer {
         public Gtk.Button recents_button;
         public Gtk.Button save_button;
 
+        public Noxer.NotebookTab? tab = null;
+
         public HeaderBar() {
             this.left_bar = new Gtk.HeaderBar();
             this.left_bar.set_title("Proyecto");
@@ -49,15 +51,36 @@ namespace Noxer {
             context.add_class("linked");
             this.right_bar.pack_start(box);
 
-            this.open_button = new Gtk.Button.with_label("Abrir");
+            this.open_button = new Gtk.Button.with_mnemonic("_Abrir");
             this.open_button.clicked.connect(() => { this.open_filechooser(); });
             box.pack_start(this.open_button, false, false, 0);
 
             this.recents_button = new Gtk.Button.from_icon_name("pan-down-symbolic", Gtk.IconSize.BUTTON);
             box.pack_start(this.recents_button, false, false, 0);
 
-            this.save_button = new Gtk.Button.from_icon_name("document-save-symbolic", Gtk.IconSize.BUTTON);
-            //box.pack_start(this.save_button, false, false, 0);
+            this.save_button = new Gtk.Button.from_stock("gtk-save");
+            this.right_bar.pack_start(this.save_button);
+        }
+
+        public void update() {
+            if (this.tab != null) {
+                if (this.tab.view.type == Noxer.ViewType.NORMAL) {
+                    Noxer.EditView view = (this.tab.view as Noxer.EditView);
+                    bool subtitle = view.file != null;
+                    this.right_bar.set_has_subtitle(subtitle);
+
+                    if (subtitle) {
+                        this.right_bar.set_subtitle(view.file);
+                    } else {
+                        this.right_bar.set_subtitle("");
+                    }
+                }
+            }
+        }
+
+        public void update_from_tab(Noxer.NotebookTab? tab) {
+            this.tab = tab;
+            this.update();
         }
     }
 }
