@@ -25,8 +25,13 @@ namespace Noxer {
         private bool _show_line_numbers = true;
         private bool _show_right_marging = false;
         private bool _show_map = true;
+        private bool _use_spaces = true;
+        private bool _smart_backspace = true;
+        private bool _auto_indent = true;
+        private bool _indent_on_tab = true;
 
         private int _right_margin_position = 80;
+        private int _tab_width = 4;
 
         private string _font_family = "Monospace 11";
 
@@ -76,11 +81,51 @@ namespace Noxer {
             }
         }
 
+        public bool use_spaces {
+            set {
+                this._use_spaces = value;
+            } get {
+                return this._use_spaces;
+            }
+        }
+
+        public bool smart_backspace {
+            set {
+                this._smart_backspace = value;
+            } get {
+                return this._smart_backspace;
+            }
+        }
+
+        public bool auto_indent {
+            set {
+                this._auto_indent = value;
+            } get {
+                return this._smart_backspace;
+            }
+        }
+
+        public bool indent_on_tab {
+            set {
+                this._indent_on_tab = value;
+            } get {
+                return this._indent_on_tab;
+            }
+        }
+
         public int right_margin_position {
             set {
                 this._right_margin_position = value;
             } get {
                 return this._right_margin_position;
+            }
+        }
+
+        public int tab_width {
+            set {
+                this._tab_width = value;
+            } get {
+                return this._tab_width;
             }
         }
 

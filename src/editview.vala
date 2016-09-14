@@ -106,9 +106,6 @@ namespace Noxer {
 
         public View() {
             this.settings = Noxer.get_settings();
-            
-            this.set_show_line_numbers(this.settings.show_line_numbers);
-            this.override_font(Pango.FontDescription.from_string(this.settings.font_family));
 
             this.buffer = new Noxer.Buffer();
             this.buffer.modified_changed.connect(this.modified_changed_cb);
@@ -116,6 +113,8 @@ namespace Noxer {
 
             this.preview_map = new Gtk.SourceMap();
             this.preview_map.set_view(this);
+
+            this.reload_settings();
         }
 
         private void modified_changed_cb(Gtk.TextBuffer buffer) {
@@ -124,6 +123,16 @@ namespace Noxer {
 
         public void read_file(string file) {
             this.buffer.reset_from_file(file);
+        }
+
+        public void reload_settings() {
+            this.set_show_line_numbers(this.settings.show_line_numbers);
+            this.set_insert_spaces_instead_of_tabs(this.settings.use_spaces);
+            this.set_tab_width(this.settings.tab_width);
+            this.set_smart_backspace(this.settings.smart_backspace);
+            this.set_auto_indent(this.settings.auto_indent);
+            this.set_indent_on_tab(this.settings.indent_on_tab);
+            this.override_font(Pango.FontDescription.from_string(this.settings.font_family));
         }
     }
 
