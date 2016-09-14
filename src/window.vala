@@ -33,6 +33,7 @@ namespace Noxer {
 
             this.headerbar = new Noxer.HeaderBar();
             this.headerbar.open_filechooser.connect(this.open_filechooser_open);
+            this.headerbar.save.connect(this.save);
             this.set_titlebar(this.headerbar);
 
             this.canvas = new Gtk.Box(Gtk.Orientation.VERTICAL, 0);
@@ -76,6 +77,22 @@ namespace Noxer {
             Noxer.FileChooserOpen filechooser = new Noxer.FileChooserOpen();
             filechooser.open_files.connect((files) => { this.open_multiple_files(files); });
             filechooser.show_all();
+        }
+
+        public void save(Gtk.Widget? widget=null) {
+            Noxer.BaseView? bview = this.editbox.get_current_view();
+            if (bview == null || bview.type == Noxer.ViewType.SETTINGS) {
+                return;
+            }
+
+            Noxer.EditView view = (bview as Noxer.EditView);
+            bool saved = view.save();
+
+            if (!saved) {
+                Noxer.FileChooserSave filechooser = new Noxer.FileChooserSave();
+                filechooser.save.connect((file) => { view.save(file); });
+                filechooser.show_all();
+            }
         }
 
         public void open_multiple_files(string[] files) {

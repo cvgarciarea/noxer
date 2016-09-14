@@ -37,6 +37,7 @@ namespace Noxer {
 
         public void set_tab(Noxer.NotebookTab tab) {
             this.tab = tab;
+            this.tab.set_view(this);
         }
 
         public Noxer.NotebookTab get_tab() {

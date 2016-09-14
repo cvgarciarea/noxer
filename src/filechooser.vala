@@ -24,6 +24,8 @@ namespace Noxer {
             NoxerApp app = Noxer.get_app_instance();
             Noxer.Window win = app.get_current_window();
             this.set_transient_for(win);
+            this.set_modal(true);
+
             this.add_button("Cancelar", Gtk.ResponseType.CANCEL);
         }
     }
@@ -50,20 +52,32 @@ namespace Noxer {
                 }
 
                 this.open_files(files);
-                this.destroy();
-            } else if (response_id == Gtk.ResponseType.CANCEL) {
-                this.destroy();
             }
+
+            this.destroy();
         }
     }
 
     public class FileChooserSave: Noxer.FileChooser {
+
+        public signal void save(string path);
 
         public FileChooserSave() {
             this.set_action(Gtk.FileChooserAction.SAVE);
             this.set_title("Guardar");
             this.add_button("Guardar", Gtk.ResponseType.OK);
             this.set_default_response(Gtk.ResponseType.OK);
+            this.set_do_overwrite_confirmation(true);
+
+            this.response.connect(this.response_cb);
+        }
+
+        private void response_cb(Gtk.Dialog dialog, int response_id) {
+            if (response_id == Gtk.ResponseType.OK) {
+                this.save(this.get_filename());
+            }
+            
+            this.destroy();
         }
     }
 }

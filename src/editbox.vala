@@ -133,6 +133,7 @@ namespace Noxer {
             this.notebook = new Gtk.Notebook();
             this.notebook.set_scrollable(true);
             this.notebook.switch_page.connect(this.switch_page_cb);
+            this.notebook.page_removed.connect(this.page_removed_cb);
             this.pack_start(this.notebook, true, true, 0);
 
             Noxer.NotebookActionBox abox = new Noxer.NotebookActionBox();
@@ -156,25 +157,26 @@ namespace Noxer {
 
             this.notebook.set_current_page(this.notebook.get_n_pages() - 1);
 
-            tab.set_view(view);
             this.views += view;
         }
 
-        private void switch_page_cb(Gtk.Widget widget, uint upage) {
-            //int page = this.notebook.get_nth_page(widget);
-            /*Noxer.BaseView? view = this.get_view_at_index((int)upage);
+        private void switch_page_cb(Gtk.Widget widget, uint page) {
+            Noxer.BaseView view = (widget as Noxer.BaseView);
+            this.update_headerbar(view.tab);
+        }
 
-            if (view != null) {
-                this.update_headerbar(view.tab);
-            } else {
+        private void page_removed_cb(Gtk.Widget widget, uint page) {
+            if (this.notebook.get_n_pages() == 0) {
                 this.update_headerbar(null);
-            }*/
-
-            //print(((int)upage).to_string() + "\n");
+            }
         }
 
         private void modified_tab_cb(Noxer.NotebookTab tab, bool modified) {
-            this.update_headerbar(tab);
+            Noxer.BaseView view = tab.view;
+
+            if (view == this.get_current_view()) {
+                this.update_headerbar(tab);
+            }
         }
 
         private void close_tab_cb(Noxer.NotebookTab tab) {
@@ -222,7 +224,7 @@ namespace Noxer {
                     Noxer.EditView editview = (bview as Noxer.EditView);
 
                     if (editview.file == null && !editview.get_modified()) {
-                        editview.set_file(file);
+                        editview.open(file);
                         return;
                     }
                 }
@@ -244,7 +246,7 @@ namespace Noxer {
             this.add_view(view);
 
             if (file != null) {
-                view.set_file(file);  // Need define tab first
+                view.open(file);  // Need define tab first
             }
         }
 

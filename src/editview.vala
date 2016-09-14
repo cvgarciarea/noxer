@@ -27,7 +27,7 @@ namespace Noxer {
         public Buffer() {
         }
 
-        public void reset_from_file(string file) {
+        public void reset_from_file(string file, bool set_text = true) {
             string text;
 
             try {
@@ -36,10 +36,13 @@ namespace Noxer {
                 print("error\n");
             }
 
-            this.set_text(text);
+            if (set_text) {
+                this.set_text(text);
+                this.begin_not_undoable_action();
+                this.end_not_undoable_action();
+            }
+
             this.set_language_from_file(file);
-            this.begin_not_undoable_action();
-            this.end_not_undoable_action();
             this.set_modified(false);
         }
 
@@ -64,6 +67,12 @@ namespace Noxer {
             Gtk.SourceLanguage? language = language_manager.guess_language(path, type);
 
             return language;
+        }
+
+        public string get_all_text() {
+            Gtk.TextIter start, end;
+            this.get_bounds(out start, out end);
+            return this.get_text(start, end, false);
         }
 
         public void set_language_from_file(string path) {
@@ -197,12 +206,40 @@ namespace Noxer {
         }
 
         public void set_file(string file) {
-            GLib.File gfile = GLib.File.new_for_path(file);
+            this.file = file;
+        }
+
+        public void open(string? file = null) {
+            if (file != null) {
+                this.set_file(file);
+            }
+
+            GLib.File gfile = GLib.File.new_for_path(this.file);
 
             if (gfile.query_exists()) {
-                this.file = file;
                 this.view.read_file(file);
                 this.get_tab().set_title(gfile.get_basename());
+            }
+        }
+
+        public bool save(string? file = null) {
+            if (file == null && this.file == null) {
+                return false;
+            } else if (file != null && this.file == null) {
+                this.set_file(file);
+            } else if (file == null && this.file != null) {
+            } else if (file != null && this.file != null) {
+                this.set_file(file);
+            }
+
+            string text = this.view.buffer.get_all_text();
+
+            try {
+                GLib.FileUtils.set_contents(this.file, text);
+                this.view.buffer.reset_from_file(this.file, false);
+                return true;
+            } catch (GLib.FileError error) {
+                return false;  // TODO: Mostrar alerta
             }
         }
 

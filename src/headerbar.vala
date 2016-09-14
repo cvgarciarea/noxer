@@ -20,6 +20,7 @@ namespace Noxer {
 
     public class HeaderBar: Gtk.Box {
 
+        public signal void save();
         public signal void open_filechooser();
         public signal void open_file(string path);
 
@@ -51,14 +52,16 @@ namespace Noxer {
             context.add_class("linked");
             this.right_bar.pack_start(box);
 
-            this.open_button = new Gtk.Button.with_mnemonic("_Abrir");
+            this.open_button = new Gtk.Button.with_label("Abrir");
             this.open_button.clicked.connect(() => { this.open_filechooser(); });
             box.pack_start(this.open_button, false, false, 0);
 
             this.recents_button = new Gtk.Button.from_icon_name("pan-down-symbolic", Gtk.IconSize.BUTTON);
             box.pack_start(this.recents_button, false, false, 0);
 
-            this.save_button = new Gtk.Button.from_stock("gtk-save");
+            this.save_button = new Gtk.Button.from_icon_name("document-save-symbolic", Gtk.IconSize.BUTTON);
+            this.save_button.set_sensitive(false);
+            this.save_button.clicked.connect(() => { this.save(); });
             this.right_bar.pack_start(this.save_button);
         }
 
@@ -68,13 +71,22 @@ namespace Noxer {
                     Noxer.EditView view = (this.tab.view as Noxer.EditView);
                     bool subtitle = view.file != null;
                     this.right_bar.set_has_subtitle(subtitle);
+                    this.save_button.set_sensitive(view.get_modified());
 
                     if (subtitle) {
                         this.right_bar.set_subtitle(view.file);
                     } else {
                         this.right_bar.set_subtitle("");
                     }
+                } else if (this.tab.view.type == Noxer.ViewType.SETTINGS) {
+                    this.right_bar.set_has_subtitle(true);
+                    this.right_bar.set_subtitle("Configuraciones");
+                    this.save_button.set_sensitive(false);
                 }
+            } else {
+                this.right_bar.set_has_subtitle(false);
+                this.right_bar.set_subtitle("");
+                this.save_button.set_sensitive(false);
             }
         }
 
