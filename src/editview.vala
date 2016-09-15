@@ -21,10 +21,19 @@ namespace Noxer {
     public class Buffer: Gtk.SourceBuffer {
 
         public signal void language_changed(string? language);
+        public signal void scroll_to_iter(Gtk.TextIter iter, double margin, bool use_align, double xalign, double yalign);
 
         public new Gtk.SourceLanguage language = null;
+        public Gtk.TextTag search_tag;
 
         public Buffer() {
+            this.make_tags();
+        }
+
+        public void make_tags() {
+            this.search_tag = this.create_tag("search");
+            this.search_tag.foreground = "#DDDDDD";
+            this.search_tag.background = "#4E9A06";
         }
 
         public void reset_from_file(string file, bool set_text = true) {
@@ -93,6 +102,64 @@ namespace Noxer {
                 this.language_changed(Noxer.DEFAULT_LANGUAGE);
             }
         }
+
+        public void search(string text, bool force_next, bool backward) {
+            Gtk.TextIter start, end, cursor;
+            this.get_bounds(out start, out end);
+            this.remove_tag(this.search_tag, start, end);
+
+            Gtk.TextMark cursor_mark = this.get_insert();
+            this.get_iter_at_mark(out cursor, cursor_mark);
+
+            if (text != "") {
+                this.search_and_mark(text, start);
+                this.select_text(text, cursor, force_next, backward);
+            }
+        }
+
+        public void search_and_mark(string text, Gtk.TextIter start) {
+            Gtk.TextIter end, match_start, match_end;
+            this.get_end_iter(out end);
+
+            bool found = start.forward_search(text, Gtk.TextSearchFlags.VISIBLE_ONLY, out match_start, out match_end, null);
+            if (found) {
+                this.apply_tag(this.search_tag, match_start, match_end);
+                this.search_and_mark(text, match_end);  // Reboot the search from the last iter of the current search
+            }
+        }
+
+        public void select_text(string text, Gtk.TextIter search_start, bool force_next, bool backward) {
+            Gtk.TextIter start, end, match_start, match_end, _start, _end;
+            this.get_bounds(out start, out end);
+
+            bool found;
+            if (!backward) {
+                found = search_start.forward_search(text, Gtk.TextSearchFlags.VISIBLE_ONLY, out match_start, out match_end, null);
+            } else {
+                found = search_start.backward_search(text, Gtk.TextSearchFlags.VISIBLE_ONLY, out match_start, out match_end, null);
+            }
+            
+            if (found) {
+                if (!force_next) {
+                    this.select_range(match_start, match_end);
+                } else {
+                    if (this.get_selection_bounds(out _start, out _end)) {
+                        if (match_start.get_offset() == _start.get_offset() && match_end.get_offset() == _end.get_offset()) {
+                            if (!backward) {
+                                this.select_text(text, _end, true, false);
+                            } else {
+                                this.select_text(text, _start, true, true);
+                            }
+                            return;
+                        }
+
+                        this.select_range(match_end, match_start);
+                    }
+
+                    this.scroll_to_iter(match_end, 0.1, true, 1.0, 1.0);
+                }
+            }
+        }
     }
 
     public class View: Gtk.SourceView {
@@ -109,6 +176,7 @@ namespace Noxer {
 
             this.buffer = new Noxer.Buffer();
             this.buffer.modified_changed.connect(this.modified_changed_cb);
+            this.buffer.scroll_to_iter.connect(this.scroll_to_iter_cb);
             this.set_buffer(this.buffer);
 
             this.preview_map = new Gtk.SourceMap();
@@ -119,6 +187,10 @@ namespace Noxer {
 
         private void modified_changed_cb(Gtk.TextBuffer buffer) {
             this.modified_changed(buffer.get_modified());
+        }
+
+        private void scroll_to_iter_cb(Gtk.TextIter iter, double margin, bool align, double xalign, double yalign) {
+            this.scroll_to_iter(iter, margin, align, xalign, yalign);
         }
 
         public void read_file(string file) {
@@ -138,6 +210,8 @@ namespace Noxer {
 
     public class SearchBar: Gtk.Box {
 
+        public signal void search(string text, bool force_next, bool backward);
+
         public Gtk.SearchEntry entry;
         public Gtk.Button prev_button;
         public Gtk.Button next_button;
@@ -151,12 +225,16 @@ namespace Noxer {
 
             this.entry = new Gtk.SearchEntry();
             this.entry.set_size_request(200, 1);
+            this.entry.changed.connect(() => { this.search(this.entry.get_text(), false, false); });
+            this.entry.activate.connect(() => { this.search(this.entry.get_text(), true, false); });
             this.pack_start(this.entry, false, false, 0);
 
             this.prev_button = new Gtk.Button.from_icon_name("go-up-symbolic", Gtk.IconSize.BUTTON);
+            this.prev_button.clicked.connect(() => { this.search(this.entry.get_text(), true, true); });
             this.pack_start(this.prev_button, false, false, 0);
 
             this.next_button = new Gtk.Button.from_icon_name("go-down-symbolic", Gtk.IconSize.BUTTON);
+            this.next_button.clicked.connect(() => { this.search(this.entry.get_text(), true, false); });
             this.pack_start(this.next_button, false, false, 0);
         }
     }
@@ -187,6 +265,7 @@ namespace Noxer {
             this.searchbar_overlay.add_overlay(this.searchbar_revealer);
 
             this.searchbar = new Noxer.SearchBar();
+            this.searchbar.search.connect(this.search_cb);
             this.searchbar_revealer.add(this.searchbar);
 
             this.searchbar_revealer.set_reveal_child(false);
@@ -212,6 +291,10 @@ namespace Noxer {
 
         private void modified_changed_cb(Noxer.View view, bool modified) {
             this.tab.set_modified(modified);
+        }
+
+        private void search_cb(Noxer.SearchBar bar, string text, bool force_next, bool backward) {
+            this.view.buffer.search(text, force_next, backward);
         }
 
         public void set_file(string file) {
