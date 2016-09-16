@@ -139,6 +139,14 @@ namespace Noxer {
                 found = search_start.backward_search(text, Gtk.TextSearchFlags.VISIBLE_ONLY, out match_start, out match_end, null);
             }
             
+            if (!found) {  // Last chance
+                if (!backward) {
+                    found = start.forward_search(text, Gtk.TextSearchFlags.VISIBLE_ONLY, out match_start, out match_end, null);
+                } else {
+                    found = end.backward_search(text, Gtk.TextSearchFlags.VISIBLE_ONLY, out match_start, out match_end, null);
+                }
+            }
+
             if (found) {
                 if (!force_next) {
                     this.select_range(match_start, match_end);
@@ -156,7 +164,7 @@ namespace Noxer {
                         this.select_range(match_end, match_start);
                     }
 
-                    this.scroll_to_iter(match_end, 0.1, true, 1.0, 1.0);
+                    this.scroll_to_iter(match_end, 0.1, true, 1.0, 0.5);
                 }
             }
         }
