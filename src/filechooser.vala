@@ -20,11 +20,15 @@ namespace Noxer {
 
     public class FileChooser: Gtk.FileChooserDialog {
 
-        public FileChooser() {
+        public FileChooser(string? folder) {
             NoxerApp app = Noxer.get_app_instance();
             Noxer.Window win = app.get_current_window();
             this.set_transient_for(win);
             this.set_modal(true);
+
+            if (folder != null) {
+                this.set_current_folder(folder);
+            }
 
             this.add_button("Cancelar", Gtk.ResponseType.CANCEL);
         }
@@ -34,7 +38,8 @@ namespace Noxer {
 
         public signal void open_files(string[] files);
 
-        public FileChooserOpen() {
+        public FileChooserOpen(string? folder) {
+            base(folder);
             this.set_action(Gtk.FileChooserAction.OPEN);
             this.set_select_multiple(true);
             this.set_title("Abrir");
@@ -62,7 +67,8 @@ namespace Noxer {
 
         public signal void save(string path);
 
-        public FileChooserSave() {
+        public FileChooserSave(string? folder) {
+            base(folder);
             this.set_action(Gtk.FileChooserAction.SAVE);
             this.set_title("Guardar");
             this.add_button("Guardar", Gtk.ResponseType.OK);

@@ -73,8 +73,22 @@ namespace Noxer {
             this.editbox.try_close_current_tab();
         }
 
+        public string? get_folder_for_filechooser() {
+            Noxer.BaseView? bview = this.editbox.get_current_view();
+            string? path = null;
+            if (bview != null && bview.type == Noxer.ViewType.NORMAL) {
+                Noxer.EditView view = (bview as Noxer.EditView);
+                if (view.file != null) {
+                    GLib.File file = GLib.File.new_for_path(view.file);
+                    path = file.get_parent().get_path();
+                }
+            }
+
+            return path;
+        }
+
         public void open_filechooser_open(Gtk.Widget? widget=null) {
-            Noxer.FileChooserOpen filechooser = new Noxer.FileChooserOpen();
+            Noxer.FileChooserOpen filechooser = new Noxer.FileChooserOpen(this.get_folder_for_filechooser());
             filechooser.open_files.connect((files) => { this.open_multiple_files(files); });
             filechooser.show_all();
         }
@@ -89,7 +103,7 @@ namespace Noxer {
             bool saved = view.save();
 
             if (!saved) {
-                Noxer.FileChooserSave filechooser = new Noxer.FileChooserSave();
+                Noxer.FileChooserSave filechooser = new Noxer.FileChooserSave(this.get_folder_for_filechooser());
                 filechooser.save.connect((file) => { view.save(file); });
                 filechooser.show_all();
             }
