@@ -21,6 +21,7 @@ namespace Noxer {
     public class NotebookTab: Gtk.Box {
 
         public signal void modified_changed(bool modified);
+        public signal void title_changed(string title);
         public signal void close();
 
         public Gtk.Label label;
@@ -53,6 +54,8 @@ namespace Noxer {
 
         public void set_title(string title) {
             this.label.set_text(title);
+            this.set_tooltip_text(title);  // For when the title is very large
+            this.title_changed(title);
         }
 
         public string get_title() {
@@ -147,6 +150,7 @@ namespace Noxer {
         private void add_view(Noxer.BaseView view) {
             Noxer.NotebookTab tab = new Noxer.NotebookTab();
             tab.modified_changed.connect(this.modified_tab_cb);
+            tab.title_changed.connect(this.title_tab_changed_cb);
             tab.close.connect(this.close_tab_cb);
 
             view.set_tab(tab);
@@ -172,6 +176,14 @@ namespace Noxer {
         }
 
         private void modified_tab_cb(Noxer.NotebookTab tab, bool modified) {
+            Noxer.BaseView view = tab.view;
+
+            if (view == this.get_current_view()) {
+                this.update_headerbar(tab);
+            }
+        }
+
+        private void title_tab_changed_cb(Noxer.NotebookTab tab, string title) {
             Noxer.BaseView view = tab.view;
 
             if (view == this.get_current_view()) {

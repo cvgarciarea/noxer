@@ -297,8 +297,15 @@ namespace Noxer {
             this.view.buffer.search(text, force_next, backward);
         }
 
-        public void set_file(string file) {
+        public void set_file(string? file) {
             this.file = file;
+
+            if (file != null) {
+                GLib.File gfile = GLib.File.new_for_path(this.file);
+                this.get_tab().set_title(gfile.get_basename());
+            } else {
+                this.get_tab().set_title("Sin guardar");
+            }
         }
 
         public void open(string? file = null) {
@@ -310,7 +317,6 @@ namespace Noxer {
 
             if (gfile.query_exists()) {
                 this.view.read_file(file);
-                this.get_tab().set_title(gfile.get_basename());
             }
         }
 

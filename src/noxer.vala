@@ -113,15 +113,18 @@ public class NoxerApp: Gtk.Application {
     }
 
     public void save(GLib.Variant? variant=null) {
-        // TODO
+        Noxer.Window win = this.get_current_window();
+        win.save();
     }
 
     public void save_as(GLib.Variant? variant=null) {
-        // TODO
+        Noxer.Window win = this.get_current_window();
+        win.save(true);
     }
 
     public new void open(GLib.Variant? variant=null) {
-        // TODO
+        Noxer.Window win = this.get_current_window();
+        win.open_filechooser_open();
     }
 }
 
